@@ -1,7 +1,8 @@
 import requests
 import pygal
 from pygal.style import LightColorizedStyle as LCS, LightenStyle as LS
-url = "https://api.github.com/search/repositories?q=language:javascript&sort=stars"
+language = 'javascript'  # Python
+url = "https://api.github.com/search/repositories?q={0}:javascript&sort=stars".format(language)
 r = requests.get(url)
 print("Status code: ", r.status_code)
 
@@ -38,16 +39,45 @@ print("Repositories returned: ", len(repo_dicts))
 #   # print("Updated: {0}".format(repo_dict['updated_at']))
 #   print("Description: {0}".format(repo_dict['description']))
 
-names, stars = [], []
+names, plot_dicts = [], []
 for repo_dict in repo_dicts:
-  names.append(repo_dict['name'])
-  stars.append(repo_dict['stargazers_count'])
+    names.append(repo_dict['name'])
+    plot_dict = {
+        'value': repo_dict['stargazers_count'],
+        'label': repo_dict['description'],
+        'xlink': repo_dict['html_url'],
+    }
+    plot_dicts.append(plot_dict)
 
 # 可视化
 my_style = LS("#333366", base_style=LCS)
-chart = pygal.Bar(style=my_style, x_label_rotation=45, show_legend=False)
-chart.title = "Most-Starred JavaScript Project on GitHub."
+
+my_config = pygal.Config()
+my_config.x_label_rotation = 45
+my_config.show_legend = False
+my_config.title_font_size = 24
+my_config.label_font_size = 14
+my_config.major_label_font_size = 18
+my_config.truncate_label = 15
+my_config.show_y_guides = False
+my_config.width = 1000
+# configs = {
+#     'x_label_rotation': 45,
+#     'show_legend': False,
+#     'title_font_size': 24,
+#     'label_font_size': 14,
+#     'major_label_font_size': 18,
+#     'truncate_label': 15,
+#     'show_y_guides': False,
+#     'width': 1000
+# }
+# for key, value in configs.items():
+#     my_config.key = value
+
+print('my_config', my_config)
+chart = pygal.Bar(my_config, style=my_style)
+chart.title = "Most-Starred {0} Project on GitHub.".format(language)
 chart.x_labels = names
 
-chart.add('', stars)
-chart.render_to_file("javascript_repos.svg")
+chart.add('', plot_dicts)
+chart.render_to_file("{0}_repos.svg".format(language))
